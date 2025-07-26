@@ -1,3 +1,110 @@
-#root {
-  color: red;
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Page Background */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to bottom, #f7e6ff, #e4ccff); /* soft lavender */
+  min-height: 100vh;
+  padding: 2rem;
+  color: #333;
+}
+
+/* Headings */
+.page-header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background-color: #663399;
+  color: white;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  font-size: 1rem;
+}
+
+.page-header a {
+  color: #ffe6ff;
+  font-weight: bold;
+}
+
+.page-header a:hover {
+  text-decoration: underline;
+  color: #ffffff;
+}
+
+/* Container Grid */
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Episode Card */
+.card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.015);
+}
+
+.card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.card h2.title {
+  font-size: 1.2rem;
+  padding: 1rem 1rem 0.25rem;
+  color: #4b2a75;
+}
+
+.card h3.code {
+  font-size: 1rem;
+  padding: 0 1rem;
+  color: #663399;
+}
+
+.card .summary {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #444;
+}
+
+/* Bottom Link */
+.card .link {
+  margin: 1rem;
+  margin-top: auto;
+  padding: 0.75rem 1rem;
+  background-color: #663399;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  border-radius: 8px;
+}
+
+.card .link:hover {
+  background-color: #4b2a75;
 }
