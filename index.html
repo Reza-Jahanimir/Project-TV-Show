@@ -9,8 +9,23 @@
   </head>
 
   <body>
-    <div id="root">
-    </div>
+    <header class="page-header">
+      <h1>Game of Thrones Episodes</h1>
+      <p>
+        Data from <a href="https://tvmaze.com" target="_blank">TVMaze.com</a>
+      </p>
+    </header>
+    <div id="episode-container" class="container"></div>
+
+    <template id="episode-template">
+      <section class="card">
+        <img src="" alt="Episode image" />
+        <h2 class="title"></h2>
+        <h3 class="code"></h3>
+        <div class="summary"></div>
+        <a class="link" href="#" target="_blank">View on TVMaze</a>
+      </section>
+    </template>
 
     <!-- Loads a provided function called getAllEpisodes() which returns all episodes -->
     <script src="episodes.js"></script>
