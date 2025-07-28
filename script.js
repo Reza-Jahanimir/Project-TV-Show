@@ -1,26 +1,49 @@
 // Public Vars
 let episodeCounter = 0;
 let searchValue = "";
+let allEpisodes = []
 
 function setup() {
-  const allEpisodes = getAllEpisodes();
 
-  // Filling drop Down Box
-  dropBoxFill(allEpisodes);
+  // create text while user is waiting. until we are fetching the data
+  const waitLoadMessage = document.createElement("p");
+  waitLoadMessage.id = "status-message";
+  waitLoadMessage.textContent = "Loading episodes...";
+  document.body.prepend(waitLoadMessage);
 
-  episodeCounter = allEpisodes.length;
+  fetch('https://api.tvmaze.com/shows/82/episodes')
+    .then((res) => {
+      if (!res.ok){
+        throw new Error("Network error")
+      }
 
-  // Search box /Filtering
-  const filtered = searchValue
-    ? allEpisodes.filter((episode) => {
-        const name = episode.name.toLowerCase();
-        const summary = episode.summary ? episode.summary.toLowerCase() : "";
-        const search = searchValue.toLowerCase();
-        return name.includes(search) || summary.includes(search);
-      })
-    : allEpisodes;
+      return res.json()
+    })
+    .then((data) => {
+      allEpisodes = data
 
-  makePageForEpisodes(filtered);
+      document.getElementById("status-message").remove();
+
+      // Filling drop Down Box
+      dropBoxFill(allEpisodes);
+
+      episodeCounter = allEpisodes.length;
+
+      // Search box /Filtering
+      const filtered = searchValue
+        ? allEpisodes.filter((episode) => {
+            const name = episode.name.toLowerCase();
+            const summary = episode.summary ? episode.summary.toLowerCase() : "";
+            const search = searchValue.toLowerCase();
+            return name.includes(search) || summary.includes(search);
+          })
+        : allEpisodes;
+
+      makePageForEpisodes(filtered);
+    })
+    .catch((err) => {
+      document.getElementById("status-message").textContent = "⚠️ Failed to load episodes. Please try again later.";
+    });
 }
 
 function padNumber(num) {
