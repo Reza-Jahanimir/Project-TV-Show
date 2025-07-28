@@ -15,6 +15,19 @@
         Data from <a href="https://tvmaze.com" target="_blank">TVMaze.com</a>
       </p>
     </header>
+
+    <!-- Search part START -->
+<div class="filter-container">
+  <label for="dropDownBoxFill">Choose Episode:</label>
+  <select id="dropDownBoxFill" name="film"></select>
+
+  <label for="searchInput">Search:</label>
+  <input type="search" id="searchInput" placeholder="Search term" />
+  
+  <span id="searchCounter">Displaying 73/73 episode(s)</span>
+</div>
+<!-- Search part FINISH -->
+
     <div id="episode-container" class="container"></div>
 
     <template id="episode-template">
