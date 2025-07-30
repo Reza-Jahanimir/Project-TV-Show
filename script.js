@@ -1,49 +1,57 @@
 // Public Vars
 let episodeCounter = 0;
 let searchValue = "";
-let allEpisodes = []
+let allEpisodes = [];
 
-function setup() {
-
-  // create text while user is waiting. until we are fetching the data
+async function setup() {
+  // Create loading message
   const waitLoadMessage = document.createElement("p");
   waitLoadMessage.id = "status-message";
   waitLoadMessage.textContent = "Loading episodes...";
   document.body.prepend(waitLoadMessage);
 
-  fetch('https://api.tvmaze.com/shows/82/episodes')
-    .then((res) => {
-      if (!res.ok){
-        throw new Error("Network error")
-      }
+  try {
+    const res = await fetch("https://api.tvmaze.com/shows/82/episodes")
+    
+    if (!res.ok) {
+      throw new Error("Network error");
+    }
 
-      return res.json()
-    })
-    .then((data) => {
-      allEpisodes = data
+    const data = await res.json();
+    allEpisodes = data;
 
-      document.getElementById("status-message").remove();
+    // Remove loading message
+    const statusMessage = document.getElementById("status-message");
+    if (statusMessage) {
+      statusMessage.remove();
+    }
 
-      // Filling drop Down Box
-      dropBoxFill(allEpisodes);
+    // Initialize UI
+    dropBoxFill(allEpisodes);
+    episodeCounter = allEpisodes.length;
 
-      episodeCounter = allEpisodes.length;
+    // Apply current search filter
+    const filtered = searchValue
+      ? allEpisodes.filter((episode) => {
+          const name = episode.name.toLowerCase();
+          const summary = episode.summary
+            ? episode.summary.toLowerCase()
+            : "";
+          const search = searchValue.toLowerCase();
+          return name.includes(search) || summary.includes(search);
+        })
+      : allEpisodes;
 
-      // Search box /Filtering
-      const filtered = searchValue
-        ? allEpisodes.filter((episode) => {
-            const name = episode.name.toLowerCase();
-            const summary = episode.summary ? episode.summary.toLowerCase() : "";
-            const search = searchValue.toLowerCase();
-            return name.includes(search) || summary.includes(search);
-          })
-        : allEpisodes;
-
-      makePageForEpisodes(filtered);
-    })
-    .catch((err) => {
-      document.getElementById("status-message").textContent = "⚠️ Failed to load episodes. Please try again later.";
-    });
+    makePageForEpisodes(filtered);
+    
+  } catch (err) {
+    console.error("Fetch error:", err);
+    const statusMessage = document.getElementById("status-message");
+    if (statusMessage) {
+      statusMessage.textContent =
+        "⚠️ Failed to load episodes. Please try again later.";
+    }
+  }
 }
 
 function padNumber(num) {
@@ -106,13 +114,12 @@ function dropBoxFill(allEpisodes) {
 //Search on Drop Down Box
 function handleDropDownChange(event) {
   const selectedId = event.target.value;
-  const allEpisodes = getAllEpisodes();
 
   if (selectedId === "all") {
-    setup(); //All episodes
+    setup(); 
   } else {
     const selectedEpisode = allEpisodes.filter((ep) => ep.id == selectedId);
-    makePageForEpisodes(selectedEpisode); // Ond episode
+    makePageForEpisodes(selectedEpisode); 
   }
 }
 
