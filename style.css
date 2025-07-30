@@ -7,8 +7,8 @@
 
 /* Page Background */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to bottom, #f7e6ff, #e4ccff); /* soft lavender */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to bottom, #f7e6ff, #e4ccff);
   min-height: 100vh;
   padding: 2rem;
   color: #333;
@@ -69,8 +69,9 @@ body {
 
 .card img {
   width: 100%;
-  height: auto;
-  display: block;
+  height: 180px;
+  object-fit: cover;
+  loading: lazy;
 }
 
 .card h2.title {
@@ -103,15 +104,14 @@ body {
   font-weight: bold;
   transition: background-color 0.3s;
   border-radius: 8px;
+  text-decoration: none;
 }
 
 .card .link:hover {
   background-color: #4b2a75;
 }
 
-
-/* Aida CSS */
-
+/* Filter CSS */
 .filter-container {
   display: flex;
   justify-content: center;
@@ -123,6 +123,11 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   max-width: fit-content;
   margin: 0 auto 2rem;
+  flex-wrap: wrap;
+}
+
+.filter-container label {
+  font-weight: 500;
 }
 
 .filter-container select,
@@ -131,10 +136,38 @@ body {
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 1rem;
+  min-width: 120px;
 }
 
 #searchCounter {
   font-size: 0.9rem;
   color: #663399;
   font-weight: bold;
+}
+
+/* Loading state */
+#status-message {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #663399;
+  padding: 2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .filter-container select,
+  .filter-container input[type="search"] {
+    width: 100%;
+    min-width: auto;
+  }
 }
