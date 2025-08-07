@@ -21,7 +21,6 @@ body {
 }
 
 /* ===== ACCESSIBILITY IMPROVEMENTS ===== */
-/* Skip to main content link for screen readers */
 .skip-link {
   position: absolute;
   top: -40px;
@@ -38,13 +37,11 @@ body {
   top: 0;
 }
 
-/* Focus indicators */
 *:focus {
   outline: 2px solid #4A90E2;
   outline-offset: 2px;
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   body {
     background-color: #fff;
@@ -52,7 +49,6 @@ body {
   }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -167,12 +163,10 @@ select:hover {
   border-color: #bbb;
 }
 
-/* Search input specific styles */
 input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: searchfield-cancel-button;
 }
 
-/* ===== SEARCH COUNTER ===== */
 #searchCounter,
 #showSearchCounter,
 #episodeSearchCounter {
@@ -185,42 +179,33 @@ input[type="search"]::-webkit-search-cancel-button {
   margin: 1rem 0;
 }
 
-/* ===== CONTAINER & GRID ===== */
+/* ===== GRID CONTAINER ===== */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-/* ===== CARD STYLES ===== */
-/* Card styles */
-.container {
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto 2rem;
 }
 
-.card {
-  background: #935050;
+/* ===== CARD STYLES FOR SHOWS & EPISODES ===== */
+.episode-card,
+.showCard {
+  background: #fff;
   border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(102, 51, 153, 0.08);
-  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: box-shadow 0.2s;
+  gap: 1rem;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
-.card:hover {
-  box-shadow: 0 4px 24px rgba(102, 51, 153, 0.15);
-}
-
-.card img {
+.episode-card img,
+.showCard img {
   width: 100%;
   max-width: 250px;
   height: auto;
@@ -230,30 +215,20 @@ input[type="search"]::-webkit-search-cancel-button {
   background: #f7e6ff;
 }
 
-.card .title {
+.episode-card .title,
+.showCard .title {
   font-size: 1.25rem;
+  padding: 0.75rem;
   font-weight: bold;
   color: #381e5e;
+  background: #f7e6ff;
+  border-radius: 8px;
   margin-bottom: 0.5rem;
   text-align: center;
 }
 
-.card .code {
-  font-size: 1rem;
-  color: #663399;
-  margin-bottom: 0.5rem;
-}
-
-.card .rating,
-.card .genres,
-.card .status-runtime {
-  font-size: 0.95rem;
-  color: #4b2a75;
-  margin-bottom: 0.25rem;
-  text-align: center;
-}
-
-.card .summary {
+.episode-card .summary,
+.showCard .summary {
   max-height: 100px;
   overflow: hidden;
   position: relative;
@@ -265,36 +240,82 @@ input[type="search"]::-webkit-search-cancel-button {
   margin: 1rem 0;
   background: #fff;
   border-radius: 10px;
-  box-shadow:
-    0 2px 8px rgba(102, 51, 153, 0.12),   /* soft purple shadow */
-    0 1.5px 6px rgba(0,0,0,0.08);         /* subtle dark shadow for depth */
+  box-shadow: 0 2px 8px rgba(102, 51, 153, 0.12), 0 1.5px 6px rgba(0, 0, 0, 0.08);
   border: 1px solid #ece6f6;
 }
 
-.card .summary:hover {
+.episode-card .summary:hover,
+.showCard .summary:hover {
   overflow: auto;
 }
 
-.card .summary::-webkit-scrollbar {
+.episode-card .summary::-webkit-scrollbar,
+.showCard .summary::-webkit-scrollbar {
   width: 6px;
 }
 
-.card .summary::-webkit-scrollbar-thumb {
+.episode-card .summary::-webkit-scrollbar-thumb,
+.showCard .summary::-webkit-scrollbar-thumb {
   background-color: #aaa;
   border-radius: 4px;
 }
 
-.card .summary::-webkit-scrollbar-track {
+.episode-card .summary::-webkit-scrollbar-track,
+.showCard .summary::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-
-
-.card .summary:hover::after {
-  opacity: 0;
+.showCard .card-info-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
 }
 
-/* Responsive design */
+.showCard .rating,
+.showCard .status-runtime {
+  flex: 1;
+  background: #f7e6ff;
+  color: #381e5e;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.showCard .card-genres {
+  width: 100%;
+  background: #e6e6ff;
+  padding: 0.75rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #4b2a75;
+  font-size: 1rem;
+  border-bottom: 2px dotted #4b2a75;
+}
+
+.card-select {
+  padding: 0.5rem 1rem;
+  background-color: #663399;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.95rem;
+  transition: background 0.3s ease;
+}
+
+.card-select:hover {
+  background-color: #512e86;
+}
+
+
+
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 900px) {
   .filter-container {
     flex-direction: column;
@@ -303,7 +324,6 @@ input[type="search"]::-webkit-search-cancel-button {
     padding: 1rem;
   }
   #onShow {
-    /* Updated for the fix */
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
@@ -317,39 +337,20 @@ input[type="search"]::-webkit-search-cancel-button {
     gap: 0.5rem;
     padding: 0.75rem;
   }
-  #backToShows {
-    margin-left: 0;
-    margin-top: 1rem;
-    align-self: flex-end;
-  }
   .container {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 }
-/* ===== RESPONSIVE DESIGN ===== */
+
 @media (max-width: 768px) {
   .page-header h1 {
     font-size: 2rem;
   }
-  
   .container {
     grid-template-columns: 1fr;
     gap: 1rem;
     padding: 0 0.5rem;
-  }
-  
-  #episode-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  #episode-controls > * {
-    margin-bottom: 0;
-  }
-  
-  .card {
-    margin-bottom: 1rem;
   }
 }
 
@@ -357,23 +358,19 @@ input[type="search"]::-webkit-search-cancel-button {
   .page-header {
     padding: 1rem 0;
   }
-  
   .page-header h1 {
     font-size: 1.8rem;
   }
-  
   .filter-container {
     padding: 0 0.5rem;
   }
-  
   #onShow,
   #episode-controls {
     padding: 1rem;
   }
-  
   input[type="search"],
   select {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
   }
 }
 
@@ -384,19 +381,17 @@ input[type="search"]::-webkit-search-cancel-button {
     color: #000;
     box-shadow: none;
   }
-  
   .filter-container {
     display: none;
   }
-  
-  .card {
+  .episode-card,
+  .showCard {
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid #ccc;
     margin-bottom: 1rem;
   }
-  
-  .selectThisShow {
+  .card-select {
     display: none;
   }
 }
@@ -419,7 +414,7 @@ input[type="search"]::-webkit-search-cancel-button {
   margin-left: 10px;
 }
 
-/* ===== ERROR STATES ===== */
+/* ===== ERROR STATE ===== */
 .error-message {
   background: #fee;
   border: 1px solid #fcc;
@@ -448,38 +443,29 @@ input[type="search"]::-webkit-search-cancel-button {
     background-color: #1a1a1a;
     color: #e0e0e0;
   }
-  
-  .card,
+  .episode-card,
+  .showCard,
   #onShow,
   #episode-controls {
     background-color: #2d2d2d;
     border-color: #444;
   }
-  
   input[type="search"],
   select {
     background-color: #333;
     border-color: #555;
     color: #e0e0e0;
   }
-  
   input[type="search"]:focus,
   select:focus {
     border-color: #4A90E2;
   }
-  
-  .card h2.title {
-    color: #e0e0e0;
-  }
-  
-  .card .summary {
-    color: #ccc;
-  }
-  
+  .title,
+  .summary,
   #searchCounter,
   #showSearchCounter,
   #episodeSearchCounter {
-    background: #333;
     color: #ccc;
+    background: #333;
   }
 }
