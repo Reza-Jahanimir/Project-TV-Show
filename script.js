@@ -300,7 +300,7 @@ function searchEpisodes(allEpisodes, searchValue) {
  * @param {Array} listOfApi - Array of episode objects to display
  */
 function makePageForEpisodes(listOfApi) {
-  const containerEpisode = document.getElementById("episode-container");
+  const containerEpisode = document.getElementById("cardContainer");
   const templateEpisode = document.getElementById("episode-template");
 
   // Update search counter
@@ -320,7 +320,7 @@ function makePageForEpisodes(listOfApi) {
     const clone = templateEpisode.content.cloneNode(true);
 
     // Image null check
-    const img = clone.querySelector("img");
+    const img = clone.querySelector(".epi-img");
     if (eachRecord.image && eachRecord.image.medium) {
       img.src = eachRecord.image.medium;
       img.alt = eachRecord.name;
@@ -354,7 +354,7 @@ function makePageForEpisodes(listOfApi) {
  * @param {Array} listOfShows - Array of show objects to display
  */
 function makePageForShows(listOfShows) {
-  const containerEpisode = document.getElementById("episode-container");
+  const containerEpisode = document.getElementById("cardContainer");
   const templateShow = document.getElementById("show-template");
 
   // Update search counter for shows
@@ -373,7 +373,6 @@ function makePageForShows(listOfShows) {
   listOfShows.forEach((eachShow) => {
     const clone = templateShow.content.cloneNode(true);
 
-    // Image null check
     const img = clone.querySelector("img");
     if (eachShow.image && eachShow.image.medium) {
       img.src = eachShow.image.medium;
@@ -392,7 +391,7 @@ function makePageForShows(listOfShows) {
     clone.querySelector(".rating").textContent = `⭐️ ${rating}`;
 
     clone.querySelector(
-      ".genres"
+      ".card-genres"
     ).textContent = `Genres: ${eachShow.genres.join(", ")}`;
 
     const status = eachShow.status || "Unknown";
@@ -401,7 +400,6 @@ function makePageForShows(listOfShows) {
       ".status-runtime"
     ).textContent = `${status} · ${runtime}`;
 
-    // Summary and toggle
     clone.querySelector(".summary").textContent =
       eachShow.summary
         ? eachShow.summary.replace(/<[^>]+>/g, "") // Remove HTML tags if present
@@ -416,7 +414,7 @@ function makePageForShows(listOfShows) {
       fetchEpisodesByShowId(eachShow.id);
       switchToEpisodesView();
     });
-    clone.querySelector(".card").appendChild(selectThisShow);
+    clone.querySelector(".showCard").appendChild(selectThisShow);
 
     containerEpisode.append(clone);
   });
