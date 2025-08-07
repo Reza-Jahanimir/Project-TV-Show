@@ -1,173 +1,485 @@
-/* Reset */
-* {
+/* ===== CSS RESET & BASE STYLES ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-/* Page Background */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to bottom, #f7e6ff, #e4ccff);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+  color: #333333;
+  background-color: #1f0242;
   min-height: 100vh;
-  padding: 2rem;
-  color: #333;
 }
 
-/* Headings */
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+/* Skip to main content link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Focus indicators */
+*:focus {
+  outline: 2px solid #4A90E2;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  body {
+    background-color: #fff;
+    color: #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== HEADER STYLES ===== */
 .page-header {
-  text-align: center;
-  padding: 2rem 1rem;
-  background-color: #663399;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 12px;
+  padding: 1.5rem 0;
+  text-align: center;
   margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .page-header h1 {
-  font-size: 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .page-header p {
-  font-size: 1rem;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  opacity: 0.9;
 }
 
 .page-header a {
-  color: #ffe6ff;
-  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  transition: all 0.3s ease;
+  display: inline-block;
 }
 
-.page-header a:hover {
-  text-decoration: underline;
-  color: #ffffff;
+.page-header a:hover,
+.page-header a:focus {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: translateY(-2px);
 }
 
-/* Container Grid */
+#backToShows {
+  display: none;
+  margin-top: 1rem;
+}
+
+/* ===== FILTER CONTAINER ===== */
+.filter-container {
+  max-width: 1200px;
+  margin: 0 auto 2rem;
+  padding: 0 1rem;
+}
+
+#onShow,
+#episode-controls {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+#episode-controls {
+  display: none;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+}
+
+/* ===== FORM ELEMENTS ===== */
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+input[type="search"],
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  margin-bottom: 1rem;
+}
+
+input[type="search"]:focus,
+select:focus {
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  outline: none;
+}
+
+input[type="search"]:hover,
+select:hover {
+  border-color: #bbb;
+}
+
+/* Search input specific styles */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: searchfield-cancel-button;
+}
+
+/* ===== SEARCH COUNTER ===== */
+#searchCounter,
+#showSearchCounter,
+#episodeSearchCounter {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #666;
+  border-left: 4px solid #4A90E2;
+  margin: 1rem 0;
+}
+
+/* ===== CONTAINER & GRID ===== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ===== CARD STYLES ===== */
+/* Card styles */
 .container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2rem;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto 2rem;
 }
 
-/* Episode Card */
 .card {
-  background-color: #ffffff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: #935050;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(102, 51, 153, 0.08);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease;
+  align-items: center;
+  transition: box-shadow 0.2s;
 }
 
 .card:hover {
-  transform: scale(1.015);
+  box-shadow: 0 4px 24px rgba(102, 51, 153, 0.15);
 }
 
 .card img {
   width: 100%;
-  height: 180px;
+  max-width: 250px;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 1rem;
   object-fit: cover;
-  loading: lazy;
+  background: #f7e6ff;
 }
 
-.card h2.title {
-  font-size: 1.2rem;
-  padding: 1rem 1rem 0.25rem;
-  color: #4b2a75;
+.card .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #381e5e;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
-.card h3.code {
+.card .code {
   font-size: 1rem;
-  padding: 0 1rem;
   color: #663399;
+  margin-bottom: 0.5rem;
+}
+
+.card .rating,
+.card .genres,
+.card .status-runtime {
+  font-size: 0.95rem;
+  color: #4b2a75;
+  margin-bottom: 0.25rem;
+  text-align: center;
 }
 
 .card .summary {
-  padding: 1rem;
+  max-height: 100px;
+  overflow: hidden;
+  position: relative;
+  padding: 0.5rem;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: #444;
+  color: #020202;
+  transition: all 0.3s ease;
+  margin: 1rem 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow:
+    0 2px 8px rgba(102, 51, 153, 0.12),   /* soft purple shadow */
+    0 1.5px 6px rgba(0,0,0,0.08);         /* subtle dark shadow for depth */
+  border: 1px solid #ece6f6;
 }
 
-/* Bottom Link */
-.card .link {
-  margin: 1rem;
-  margin-top: auto;
-  padding: 0.75rem 1rem;
-  background-color: #663399;
-  color: white;
-  text-align: center;
-  font-weight: bold;
-  transition: background-color 0.3s;
-  border-radius: 8px;
-  text-decoration: none;
+.card .summary:hover {
+  overflow: auto;
 }
 
-.card .link:hover {
-  background-color: #4b2a75;
+.card .summary::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Filter CSS */
-.filter-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  background-color: #fff;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  max-width: fit-content;
-  margin: 0 auto 2rem;
-  flex-wrap: wrap;
+.card .summary::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 4px;
 }
 
-.filter-container label {
-  font-weight: 500;
+.card .summary::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 
-.filter-container select,
-.filter-container input[type="search"] {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-  min-width: 120px;
-}
 
-#searchCounter {
-  font-size: 0.9rem;
-  color: #663399;
-  font-weight: bold;
-}
 
-/* Loading state */
-#status-message {
-  text-align: center;
-  font-size: 1.1rem;
-  color: #663399;
-  padding: 2rem;
+.card .summary:hover::after {
+  opacity: 0;
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
-  body {
-    padding: 1rem;
-  }
-
+@media (max-width: 900px) {
   .filter-container {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 1.5rem;
+    padding: 1rem;
   }
+  #onShow {
+    /* Updated for the fix */
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+  #episode-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+  #backToShows {
+    margin-left: 0;
+    margin-top: 1rem;
+    align-self: flex-end;
+  }
+  .container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 2rem;
+  }
+  
+  .container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 0.5rem;
+  }
+  
+  #episode-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  #episode-controls > * {
+    margin-bottom: 0;
+  }
+  
+  .card {
+    margin-bottom: 1rem;
+  }
+}
 
-  .filter-container select,
-  .filter-container input[type="search"] {
-    width: 100%;
-    min-width: auto;
+@media (max-width: 480px) {
+  .page-header {
+    padding: 1rem 0;
+  }
+  
+  .page-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .filter-container {
+    padding: 0 0.5rem;
+  }
+  
+  #onShow,
+  #episode-controls {
+    padding: 1rem;
+  }
+  
+  input[type="search"],
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .page-header {
+    background: none;
+    color: #000;
+    box-shadow: none;
+  }
+  
+  .filter-container {
+    display: none;
+  }
+  
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+  }
+  
+  .selectThisShow {
+    display: none;
+  }
+}
+
+/* ===== LOADING SPINNER ===== */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #4A90E2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+}
+
+/* ===== ERROR STATES ===== */
+.error-message {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+/* ===== NO RESULTS STATE ===== */
+.container p {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+  font-size: 1.1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== DARK MODE SUPPORT ===== */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+  }
+  
+  .card,
+  #onShow,
+  #episode-controls {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+  
+  input[type="search"],
+  select {
+    background-color: #333;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  
+  input[type="search"]:focus,
+  select:focus {
+    border-color: #4A90E2;
+  }
+  
+  .card h2.title {
+    color: #e0e0e0;
+  }
+  
+  .card .summary {
+    color: #ccc;
+  }
+  
+  #searchCounter,
+  #showSearchCounter,
+  #episodeSearchCounter {
+    background: #333;
+    color: #ccc;
   }
 }
