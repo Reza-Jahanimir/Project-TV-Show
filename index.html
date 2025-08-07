@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TV Show Project | Reza Jahanimir (reza-jahanimir)</title>
+    <title>TV Show Project | Reza Jahanimir</title>
     <script defer src="script.js"></script>
     <link href="style.css" rel="stylesheet" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
@@ -11,33 +11,75 @@
 
   <body>
     <header class="page-header">
-      <h1>Game of Thrones Episodes</h1>
+      <h1>TV Shows</h1>
       <p>
         Data from <a href="https://tvmaze.com" target="_blank">TVMaze.com</a>
       </p>
+      <a id="backToShows" href="#">← Back to Shows</a>
     </header>
+    <div class="filter-container">
+      <div id="onShow">
+        <div class="field-group">
+          <label for="showSearchInput">Search Shows:</label>
+          <input
+            type="search"
+            id="showSearchInput"
+            placeholder="Search shows by name, genre, or summary"
+          />
+        </div>
 
-    <!-- Search part START -->
-<div class="filter-container">
-  <label for="dropDownBoxFill">Choose Episode:</label>
-  <select id="dropDownBoxFill" name="film"></select>
+        <p id="showSearchCounter">Loading shows...</p>
 
-  <label for="searchInput">Search:</label>
-  <input type="search" id="searchInput" placeholder="Search term" />
-  
-  <span id="searchCounter">Displaying 73/73 episode(s)</span>
-</div>
-<!-- Search part FINISH -->
+        <div class="field-group">
+          <label for="dDBAllShows">Choose Show:</label>
+          <select id="dDBAllShows" name="Show"></select>
+        </div>
+      </div>
+
+      <div id="episode-controls">
+        <label for="dropDownBoxFill">Choose Episode:</label>
+        <select id="dropDownBoxFill" name="film"></select>
+
+        <label for="episodeSearchInput">Search Episodes:</label>
+        <input
+          type="search"
+          id="episodeSearchInput"
+          placeholder="Search episodes"
+        />
+        <p id="episodeSearchCounter">xxx</p>
+      </div>
+    </div>
 
     <div id="episode-container" class="container"></div>
 
     <template id="episode-template">
       <section class="card">
-        <img src="" alt="Episode image" />
+        <img src="IMAGE_URL" alt="Show poster" />
+
+        <div class="card-info-row">
+          <div class="card-info-box">Rating: 8.5</div>
+          <div class="card-info-box">Ended</div>
+        </div>
+
+        <div class="card-genres">Genres: Drama, Action</div>
+
+        <div class="card-summary">
+          A compelling story of love and betrayal...
+        </div>
+
+        <button class="card-select">Select</button>
+      </section>
+    </template>
+    <template id="show-template">
+      <section class="card">
+        <img src="" alt="" />
         <h2 class="title"></h2>
-        <h3 class="code"></h3>
+        <p class="rating"></p>
+        <p class="genres"></p>
+        <p class="status-runtime"></p>
         <div class="summary"></div>
-        <a class="link" href="#" target="_blank">View on TVMaze</a>
+        <!-- The toggle summary button will be added dynamically -->
+        <!-- The "select this show" button will be added dynamically -->
       </section>
     </template>
   </body>
