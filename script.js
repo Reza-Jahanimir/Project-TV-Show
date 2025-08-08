@@ -10,8 +10,271 @@ let showCounter = 0;
 
 let fetchCache = new Map();
 
+// Pagination variables
+let currentPage = 1;
+let itemsPerPage = 12; // 12 episodes (4 rows of 3) or 12 shows
+let totalPages = 1;
+let currentDisplayList = []; // Currently filtered/searched items
+
+//  ----------------------- Pagination Functions ------------------------
+
+/**
+ * Creates pagination controls and handles page navigation
+ * @param {Array} items - Array of items to paginate
+ * @param {string} type - 'shows' or 'episodes'
+ */
+function createPagination(items, type) {
+  currentDisplayList = items;
+  totalPages = Math.ceil(items.length / itemsPerPage);
+  
+  // Create pagination container
+  let paginationContainer = document.getElementById('pagination-container');
+  if (!paginationContainer) {
+    paginationContainer = document.createElement('div');
+    paginationContainer.id = 'pagination-container';
+    paginationContainer.className = 'pagination-container';
+    
+    // Insert after the card container
+    const cardContainer = document.getElementById('cardContainer');
+    cardContainer.parentNode.insertBefore(paginationContainer, cardContainer.nextSibling);
+  }
+  
+  // Clear existing pagination
+  paginationContainer.innerHTML = '';
+  
+  if (totalPages <= 1) {
+    paginationContainer.style.display = 'none';
+    return;
+  }
+  
+  paginationContainer.style.display = 'flex';
+  
+  // Previous button
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = '← Previous';
+  prevBtn.className = 'pagination-btn';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      displayPage(currentDisplayList, type);
+    }
+  });
+  paginationContainer.appendChild(prevBtn);
+  
+  // Page info
+  const pageInfo = document.createElement('span');
+  pageInfo.className = 'page-info';
+  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  paginationContainer.appendChild(pageInfo);
+  
+  // Page numbers (show up to 5 page numbers)
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + 4);
+  
+  const pageNumbers = document.createElement('div');
+  pageNumbers.className = 'page-numbers';
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.textContent = i;
+    pageBtn.className = `pagination-btn page-number ${i === currentPage ? 'active' : ''}`;
+    pageBtn.addEventListener('click', () => {
+      currentPage = i;
+      displayPage(currentDisplayList, type);
+    });
+    pageNumbers.appendChild(pageBtn);
+  }
+  paginationContainer.appendChild(pageNumbers);
+  
+  // Next button
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next →';
+  nextBtn.className = 'pagination-btn';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      displayPage(currentDisplayList, type);
+    }
+  });
+  paginationContainer.appendChild(nextBtn);
+  
+  // Items per page selector
+  const itemsPerPageContainer = document.createElement('div');
+  itemsPerPageContainer.className = 'items-per-page';
+  
+  const label = document.createElement('label');
+  label.textContent = 'Items per page: ';
+  
+  const select = document.createElement('select');
+  select.className = 'items-per-page-select';
+  [6, 12, 24, 48].forEach(num => {
+    const option = document.createElement('option');
+    option.value = num;
+    option.textContent = num;
+    option.selected = num === itemsPerPage;
+    select.appendChild(option);
+  });
+  
+  select.addEventListener('change', (e) => {
+    itemsPerPage = parseInt(e.target.value);
+    currentPage = 1; // Reset to first page
+    displayPage(currentDisplayList, type);
+  });
+  
+  itemsPerPageContainer.appendChild(label);
+  itemsPerPageContainer.appendChild(select);
+  paginationContainer.appendChild(itemsPerPageContainer);
+}
+
+/**
+ * Displays a specific page of items
+ * @param {Array} items - Array of items to display
+ * @param {string} type - 'shows' or 'episodes'
+ */
+function displayPage(items, type) {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = items.slice(startIndex, endIndex);
+  
+  if (type === 'episodes') {
+    renderEpisodesPage(pageItems);
+  } else {
+    renderShowsPage(pageItems);
+  }
+  
+  createPagination(items, type);
+  
+  // Scroll to top of results
+  document.getElementById('cardContainer').scrollIntoView({ 
+    behavior: 'smooth', 
+    block: 'start' 
+  });
+}
+
+/**
+ * Renders episode cards for current page only
+ */
+function renderEpisodesPage(episodes) {
+  const containerEpisode = document.getElementById("cardContainer");
+  const templateEpisode = document.getElementById("episode-template");
+
+  containerEpisode.className = "container episodes";
+  containerEpisode.innerHTML = "";
+
+  if (episodes.length === 0) {
+    containerEpisode.innerHTML = "<p>No episodes match your search.</p>";
+    return;
+  }
+
+  episodes.forEach((eachRecord) => {
+    const clone = templateEpisode.content.cloneNode(true);
+
+    const img = clone.querySelector(".epi-img");
+    if (eachRecord.image && eachRecord.image.medium) {
+      img.src = eachRecord.image.medium;
+      img.alt = eachRecord.name;
+    } else {
+      img.src = "https://via.placeholder.com/250x140?text=No+Image";
+      img.alt = "No image available";
+    }
+
+    clone.querySelector(".title").textContent = eachRecord.name;
+    clone.querySelector(".code").textContent =
+      eachRecord.season !== undefined && eachRecord.number !== undefined
+        ? formatEpisodeCode(eachRecord.season, eachRecord.number)
+        : "Show";
+
+    clone.querySelector(".summary").textContent =
+      eachRecord.summary
+        ? eachRecord.summary.replace(/<[^>]+>/g, "")
+        : "No summary available.";
+
+    containerEpisode.append(clone);
+  });
+}
+
+/**
+ * Renders show cards for current page only
+ */
+function renderShowsPage(shows) {
+  const containerEpisode = document.getElementById("cardContainer");
+  const templateShow = document.getElementById("show-template");
+
+  containerEpisode.className = "container";
+  containerEpisode.innerHTML = "";
+
+  if (shows.length === 0) {
+    containerEpisode.innerHTML = "<p>No shows available.</p>";
+    return;
+  }
+
+  shows.forEach((eachShow) => {
+    const clone = templateShow.content.cloneNode(true);
+
+    const img = clone.querySelector("img");
+    if (eachShow.image && eachShow.image.medium) {
+      img.src = eachShow.image.medium;
+      img.alt = eachShow.name;
+    } else {
+      img.src = "https://via.placeholder.com/250x140?text=No+Image";
+      img.alt = "No image available";
+    }
+
+    clone.querySelector(".title").textContent = eachShow.name;
+
+    const rating = eachShow.rating && eachShow.rating.average ? eachShow.rating.average : "N/A";
+    clone.querySelector(".rating").textContent = `rating: ⭐️ ${rating}`;
+
+    clone.querySelector(".card-genres").textContent = `Genres: ${eachShow.genres.join(", ")}`;
+
+    const status = eachShow.status || "Unknown";
+    clone.querySelector(".status").textContent = `Status: ${status}`;
+
+    const runtime = eachShow.runtime ? `${eachShow.runtime} min` : "N/A";
+    clone.querySelector(".runtime").textContent = `Run-Time: ${runtime}`;
+
+    clone.querySelector(".summary").textContent =
+      eachShow.summary
+        ? eachShow.summary.replace(/<[^>]+>/g, "")
+        : "No summary available.";
+
+    const selectThisShow = document.createElement("button");
+    selectThisShow.className = "selectThisShow";
+    selectThisShow.textContent = "▶️ Watch Show";
+    selectThisShow.addEventListener("click", function () {
+      document.getElementById("dDBAllShows").value = eachShow.id;
+      fetchEpisodesByShowId(eachShow.id);
+      switchToEpisodesView();
+    });
+    clone.querySelector(".showCard").appendChild(selectThisShow);
+
+    containerEpisode.append(clone);
+  });
+}
+
+//  ----------------------- Updated Main Functions ------------------------
+
+/**
+ * Updated function to use pagination
+ */
+function makePageForEpisodes(listOfApi) {
+  currentPage = 1; // Reset to first page
+  searchCounter(listOfApi, episodeCounter, "episodes");
+  displayPage(listOfApi, "episodes");
+}
+
+/**
+ * Updated function to use pagination
+ */
+function makePageForShows(listOfShows) {
+  currentPage = 1; // Reset to first page
+  searchCounter(listOfShows, allShows.length, "shows");
+  displayPage(listOfShows, "shows");
+}
+
 //  ----------------------- fetch Functions ------------------------
-// Purpose: To fetch data from an API only once per URL and reuse that response later instead of fetching it again from the network.
 async function fetchWithCache(url) {
   if (fetchCache.has(url)) {
     console.log("Using cache for:", url);
@@ -33,10 +296,6 @@ async function fetchWithCache(url) {
   }
 }
 
-/**
- * Fetches all TV shows from the TVMaze API and sorts them alphabetically
- * @returns {Promise<Array>} Array of show objects sorted by name, or empty array on error
- */
 async function fetchAllShows(maxPages = 10) {
   let all = [];
 
@@ -47,7 +306,6 @@ async function fetchAllShows(maxPages = 10) {
       if (!Array.isArray(data) || data.length === 0) return;
       all.push(...data);
       if (page + 1 < maxPages) await getPage(page + 1);
-      // else stop after maxPages
     } catch (err) {
       console.error("Failed fetching show page", page, err);
     }
@@ -59,13 +317,7 @@ async function fetchAllShows(maxPages = 10) {
   );
 }
 
-/**
- * Fetches all episodes for a specific TV show by its ID
- * Shows loading message during fetch and updates UI when complete
- * @param {number|string} showId - The ID of the show to fetch episodes for
- */
 function fetchEpisodesByShowId(showId) {
-  // Add loading message specifically for episode fetch
   const waitLoadMessage = document.createElement("p");
   waitLoadMessage.id = "status-message";
   waitLoadMessage.textContent = "Loading episodes...";
@@ -80,7 +332,6 @@ function fetchEpisodesByShowId(showId) {
       allEpisodes = episodes;
       episodeCounter = episodes.length;
 
-      // Remove loading message only *after success*
       const msg = document.getElementById("status-message");
       if (msg) msg.remove();
 
@@ -97,17 +348,12 @@ function fetchEpisodesByShowId(showId) {
 }
 
 //  ----------------------- main setup  ------------------------
-
-/**
- * Main initialization function that runs when the page loads
- * Fetches shows, populates dropdowns, displays initial content, and sets up event listeners
- */
 async function setup() {
-  // Fetch all shows
   allShows = await fetchAllShows();
   dropBoxAllShows(allShows);
   switchToShowsView(allShows);
   console.log(allShows);
+
   // Event Listeners
   document
     .getElementById("showSearchInput")
@@ -124,22 +370,12 @@ async function setup() {
   document
     .getElementById("backToShows")
     .addEventListener("click", function (e) {
-    e.preventDefault();
-    switchToShowsView();
+      e.preventDefault();
+      switchToShowsView();
     });
-
-  selectThisShow.addEventListener("click", function () {
-  document.getElementById("dDBAllShows").value = eachShow.id;
-  fetchEpisodesByShowId(eachShow.id);
-  switchToEpisodesView();
-});
 }
 
-//  ----------------------- Event lister logic  ------------------------
-
-/**
- * Handles show dropdown selection changes
- */
+//  ----------------------- Event listener logic  ------------------------
 function handleShowDropDownChange(event) {
   const selectedId = event.target.value;
 
@@ -150,9 +386,6 @@ function handleShowDropDownChange(event) {
   }
 }
 
-/**
- * Handles episode dropdown selection changes
- */
 function handleEpisodeDropDownChange(event) {
   const selectedId = event.target.value;
 
@@ -164,9 +397,6 @@ function handleEpisodeDropDownChange(event) {
   }
 }
 
-/**
- * Handles show search input events
- */
 function handleShowSearchEvent(event) {
   const searchValue = event.target.value.toLowerCase().trim();
 
@@ -189,9 +419,6 @@ function handleShowSearchEvent(event) {
   }
 }
 
-/**
- * Handles episode search input events
- */
 function handleEpisodeSearchEvent(event) {
   const searchValue = event.target.value.toLowerCase().trim();
 
@@ -211,14 +438,13 @@ function handleEpisodeSearchEvent(event) {
 }
 
 // ----------------------- View Management ------------------------
-
 function switchToShowsView() {
   currentView = "shows";
   document.getElementById("episode-controls").style.display = "none";
   document.getElementById("onShow").style.display = "block";
   document.getElementById("showSearchInput").style.display = "block";
   document.querySelector('label[for="showSearchInput"]').style.display = "block";
-  document.getElementById("backToShows").style.display = "none"; // Hide back link
+  document.getElementById("backToShows").style.display = "none";
   makePageForShows(allShows);
 }
 
@@ -226,28 +452,15 @@ function switchToEpisodesView() {
   currentView = "episodes";
   document.getElementById("episode-controls").style.display = "flex";
   document.getElementById("onShow").style.display = "none";
-  document.getElementById("backToShows").style.display = "block"; // Show back link
+  document.getElementById("backToShows").style.display = "block";
   document.getElementById("searchCounter").style.display = "block";
 }
 
-
 //  ----------------------- Helper Function------------------------
-
-/**
- * Pads a number with leading zeros to ensure it's at least 2 digits
- * @param {number} num - Number to pad
- * @returns {string} Padded number as string (e.g., 1 becomes "01")
- */
 function padNumber(num) {
   return num.toString().padStart(2, "0");
 }
 
-/**
- * Formats season and episode numbers into standard TV format (e.g., S01E05)
- * @param {number} season - Season number
- * @param {number} number - Episode number
- * @returns {string} Formatted episode code
- */
 function formatEpisodeCode(season, number) {
   return `S${padNumber(season)}E${padNumber(number)}`;
 }
@@ -256,11 +469,6 @@ function formatShowCode(number) {
   return `${padNumber(number)}`;
 }
 
-/**
- * Updates the search counter display to show current results vs total
- * @param {Array} episodeList - Current filtered list of episodes
- * @param {number} episodeCounter - Total number of episodes available
- */
 function searchCounter(list, total, type = "shows") {
   if (type === "shows") {
     const counter = document.getElementById("showSearchCounter");
@@ -275,13 +483,6 @@ function searchCounter(list, total, type = "shows") {
   }
 }
 
-//  ----------------------- render Function------------------------
-
-/**
- * Filters episodes based on search term in name or summary
- * @param {Array} allEpisodes - Array of all episodes to search through
- * @param {string} searchValue - Search term to filter by
- */
 function searchEpisodes(allEpisodes, searchValue) {
   const filtered = searchValue
     ? allEpisodes.filter((episode) => {
@@ -294,142 +495,10 @@ function searchEpisodes(allEpisodes, searchValue) {
   makePageForEpisodes(filtered);
 }
 
-/**
- * Renders episode cards on the page using the template
- * Creates cards for each episode with image, title, episode code, summary, and link
- * @param {Array} listOfApi - Array of episode objects to display
- */
-function makePageForEpisodes(listOfApi) {
-  const containerEpisode = document.getElementById("cardContainer");
-  const templateEpisode = document.getElementById("episode-template");
-
-  // Update search counter
-  searchCounter(listOfApi, episodeCounter, "episodes");
-
-  // Clear container before rendering
-  containerEpisode.innerHTML = "";
-
-  // Handle case where no results were found
-  if (listOfApi.length === 0) {
-    containerEpisode.innerHTML = "<p>No episodes match your search.</p>";
-    return;
-  }
-
-  // Render each episode card
-  listOfApi.forEach((eachRecord) => {
-    const clone = templateEpisode.content.cloneNode(true);
-
-    // Image null check
-    const img = clone.querySelector(".epi-img");
-    if (eachRecord.image && eachRecord.image.medium) {
-      img.src = eachRecord.image.medium;
-      img.alt = eachRecord.name;
-    } else {
-      img.src = "https://via.placeholder.com/250x140?text=No+Image";
-      img.alt = "No image available";
-    }
-
-    clone.querySelector(".title").textContent = eachRecord.name;
-    clone.querySelector(".code").textContent =
-      eachRecord.season !== undefined && eachRecord.number !== undefined
-        ? formatEpisodeCode(eachRecord.season, eachRecord.number)
-        : "Show";
-
-    const summaryEl = clone.querySelector(".summary");
-    summaryEl.innerHTML = eachRecord.summary || "No summary available.";
-
-  // Summary and toggle
-    clone.querySelector(".summary").textContent =
-      eachRecord.summary
-        ? eachRecord.summary.replace(/<[^>]+>/g, "") // Remove HTML tags if present
-        : "No summary available.";
-
-    containerEpisode.append(clone);
-  });
-}
-
-/**
- * Renders show cards on the page using the template
- * Creates clickable cards for each show that when clicked, loads that show's episodes
- * @param {Array} listOfShows - Array of show objects to display
- */
-function makePageForShows(listOfShows) {
-  const containerEpisode = document.getElementById("cardContainer");
-  const templateShow = document.getElementById("show-template");
-
-  // Update search counter for shows
-  searchCounter(listOfShows, allShows.length, "shows");
-
-  // Clear container before rendering
-  containerEpisode.innerHTML = "";
-
-  // Handle case where no shows were found
-  if (listOfShows.length === 0) {
-    containerEpisode.innerHTML = "<p>No shows available.</p>";
-    return;
-  }
-
-  // Render each show card
-  listOfShows.forEach((eachShow) => {
-    const clone = templateShow.content.cloneNode(true);
-
-    const img = clone.querySelector("img");
-    if (eachShow.image && eachShow.image.medium) {
-      img.src = eachShow.image.medium;
-      img.alt = eachShow.name;
-    } else {
-      img.src = "https://via.placeholder.com/250x140?text=No+Image";
-      img.alt = "No image available";
-    }
-
-    clone.querySelector(".title").textContent = eachShow.name;
-
-    const rating =
-      eachShow.rating && eachShow.rating.average
-        ? eachShow.rating.average
-        : "N/A";
-    clone.querySelector(".rating").textContent = `⭐️ ${rating}`;
-
-    clone.querySelector(
-      ".card-genres"
-    ).textContent = `Genres: ${eachShow.genres.join(", ")}`;
-
-    const status = eachShow.status || "Unknown";
-    const runtime = eachShow.runtime ? `${eachShow.runtime} min` : "N/A";
-    clone.querySelector(
-      ".status-runtime"
-    ).textContent = `${status} · ${runtime}`;
-
-    clone.querySelector(".summary").textContent =
-      eachShow.summary
-        ? eachShow.summary.replace(/<[^>]+>/g, "") // Remove HTML tags if present
-        : "No summary available.";
-
-    // Add click event to make show cards clickable
-    const selectThisShow = document.createElement("button");
-    selectThisShow.className = "selectThisShow";
-    selectThisShow.textContent = "select This Show";
-    selectThisShow.addEventListener("click", function () {
-      document.getElementById("dDBAllShows").value = eachShow.id;
-      fetchEpisodesByShowId(eachShow.id);
-      switchToEpisodesView();
-    });
-    clone.querySelector(".showCard").appendChild(selectThisShow);
-
-    containerEpisode.append(clone);
-  });
-}
-
-/**
- * Populates the episode dropdown with all episodes from current show
- * Creates options with formatted episode codes and names
- * @param {Array} allEpisodes - Array of episode objects to populate dropdown with
- */
 function dropBoxFill(allEpisodes) {
   const dropDBox = document.getElementById("dropDownBoxFill");
   dropDBox.innerHTML = "";
 
-  // Show All Episodes
   dropDBox.add(new Option("Show All Episodes", "all"));
 
   allEpisodes.forEach((episode) => {
@@ -444,11 +513,6 @@ function dropBoxFill(allEpisodes) {
   });
 }
 
-/**
- * Populates the show dropdown with all available shows
- * Creates options with show names, sorted alphabetically
- * @param {Array} allShows - Array of show objects to populate dropdown with
- */
 function dropBoxAllShows(allShows) {
   const dropDBoxShows = document.getElementById("dDBAllShows");
   dropDBoxShows.innerHTML = "";
@@ -462,8 +526,3 @@ function dropBoxAllShows(allShows) {
 
 // Initialize the application when the page loads
 window.onload = setup;
-// Add this after your setup() function or at the end of the file:
-document.getElementById("backToShows").addEventListener("click", function (e) {
-  e.preventDefault();
-  switchToShowsView();
-});
