@@ -1,304 +1,44 @@
-//  ----------------------- global variable ------------------------
-let episodeCounter = 0;
-let searchValue = "";
-let allEpisodes = [];
-let allShows = [];
+// ===================== STATE =====================
+// 1) API/Data state
+const stateData = {
+  allShows: [],
+  allEpisodes: [],
+  fetchCache: new Map(),
+  currentShowId: null,
+  episodeCounter: 0,
+};
 
-let currentView = "shows"; // 'shows' or 'episodes'
-let currentShowId = null;
-let showCounter = 0;
+// 2) Search/UI mode state
+const stateSearch = {
+  view: "shows",          // 'shows' | 'episodes'
+  value: "",              // current search query (lowercased, trimmed)
+};
 
-let fetchCache = new Map();
+// 3) Pagination state
+const statePagination = {
+  currentPage: 1,
+  itemsPerPage: 12,       // 12 episodes (4x3) or 12 shows
+  totalPages: 1,
+  currentDisplayList: [],
+  currentType: "shows",   // 'shows' | 'episodes'
+};
 
-// Pagination variables
-let currentPage = 1;
-let itemsPerPage = 12; // 12 episodes (4 rows of 3) or 12 shows
-let totalPages = 1;
-let currentDisplayList = []; // Currently filtered/searched items
-
-//  ----------------------- Pagination Functions ------------------------
-
-/**
- * Creates pagination controls and handles page navigation
- * @param {Array} items - Array of items to paginate
- * @param {string} type - 'shows' or 'episodes'
- */
-function createPagination(items, type) {
-  currentDisplayList = items;
-  totalPages = Math.ceil(items.length / itemsPerPage);
-  
-  // Create pagination container
-  let paginationContainer = document.getElementById('pagination-container');
-  if (!paginationContainer) {
-    paginationContainer = document.createElement('div');
-    paginationContainer.id = 'pagination-container';
-    paginationContainer.className = 'pagination-container';
-    
-    // Insert after the card container
-    const cardContainer = document.getElementById('cardContainer');
-    cardContainer.parentNode.insertBefore(paginationContainer, cardContainer.nextSibling);
-  }
-  
-  // Clear existing pagination
-  paginationContainer.innerHTML = '';
-  
-  if (totalPages <= 1) {
-    paginationContainer.style.display = 'none';
-    return;
-  }
-  
-  paginationContainer.style.display = 'flex';
-  
-  // Previous button
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = '← Previous';
-  prevBtn.className = 'pagination-btn';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage--;
-      displayPage(currentDisplayList, type);
-    }
-  });
-  paginationContainer.appendChild(prevBtn);
-  
-  // Page info
-  const pageInfo = document.createElement('span');
-  pageInfo.className = 'page-info';
-  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-  paginationContainer.appendChild(pageInfo);
-  
-  // Page numbers (show up to 5 page numbers)
-  const startPage = Math.max(1, currentPage - 2);
-  const endPage = Math.min(totalPages, startPage + 4);
-  
-  const pageNumbers = document.createElement('div');
-  pageNumbers.className = 'page-numbers';
-  
-  for (let i = startPage; i <= endPage; i++) {
-    const pageBtn = document.createElement('button');
-    pageBtn.textContent = i;
-    pageBtn.className = `pagination-btn page-number ${i === currentPage ? 'active' : ''}`;
-    pageBtn.addEventListener('click', () => {
-      currentPage = i;
-      displayPage(currentDisplayList, type);
-    });
-    pageNumbers.appendChild(pageBtn);
-  }
-  paginationContainer.appendChild(pageNumbers);
-  
-  // Next button
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next →';
-  nextBtn.className = 'pagination-btn';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      displayPage(currentDisplayList, type);
-    }
-  });
-  paginationContainer.appendChild(nextBtn);
-  
-  // Items per page selector
-  const itemsPerPageContainer = document.createElement('div');
-  itemsPerPageContainer.className = 'items-per-page';
-  
-  const label = document.createElement('label');
-  label.textContent = 'Items per page: ';
-  
-  const select = document.createElement('select');
-  select.className = 'items-per-page-select';
-  [6, 12, 24, 48].forEach(num => {
-    const option = document.createElement('option');
-    option.value = num;
-    option.textContent = num;
-    option.selected = num === itemsPerPage;
-    select.appendChild(option);
-  });
-  
-  select.addEventListener('change', (e) => {
-    itemsPerPage = parseInt(e.target.value);
-    currentPage = 1; // Reset to first page
-    displayPage(currentDisplayList, type);
-  });
-  
-  itemsPerPageContainer.appendChild(label);
-  itemsPerPageContainer.appendChild(select);
-  paginationContainer.appendChild(itemsPerPageContainer);
-}
-
-/**
- * Displays a specific page of items
- * @param {Array} items - Array of items to display
- * @param {string} type - 'shows' or 'episodes'
- */
-function displayPage(items, type) {
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const pageItems = items.slice(startIndex, endIndex);
-  
-  if (type === 'episodes') {
-    renderEpisodesPage(pageItems);
-  } else {
-    renderShowsPage(pageItems);
-  }
-  
-  createPagination(items, type);
-  
-  // Scroll to top of results
-  document.getElementById('cardContainer').scrollIntoView({ 
-    behavior: 'smooth', 
-    block: 'start' 
-  });
-}
-
-/**
- * Renders episode cards for current page only
- */
-function renderEpisodesPage(episodes) {
-  const containerEpisode = document.getElementById("cardContainer");
-  const templateEpisode = document.getElementById("episode-template");
-
-  containerEpisode.className = "container episodes";
-  containerEpisode.innerHTML = "";
-
-  if (episodes.length === 0) {
-    containerEpisode.innerHTML = "<p>No episodes match your search.</p>";
-    return;
-  }
-
-  episodes.forEach((eachRecord) => {
-    const clone = templateEpisode.content.cloneNode(true);
-
-    const img = clone.querySelector(".epi-img");
-    if (eachRecord.image && eachRecord.image.medium) {
-      img.src = eachRecord.image.medium;
-      img.alt = eachRecord.name;
-    } else {
-      img.src = "https://via.placeholder.com/250x140?text=No+Image";
-      img.alt = "No image available";
-    }
-
-    clone.querySelector(".title").textContent = eachRecord.name;
-    clone.querySelector(".code").textContent =
-      eachRecord.season !== undefined && eachRecord.number !== undefined
-        ? formatEpisodeCode(eachRecord.season, eachRecord.number)
-        : "Show";
-
-    clone.querySelector(".summary").textContent =
-      eachRecord.summary
-        ? eachRecord.summary.replace(/<[^>]+>/g, "")
-        : "No summary available.";
-
-    containerEpisode.append(clone);
-  });
-}
-
-/**
- * Renders show cards for current page only
- */
-function renderShowsPage(shows) {
-  const containerEpisode = document.getElementById("cardContainer");
-  const templateShow = document.getElementById("show-template");
-
-  containerEpisode.className = "container";
-  containerEpisode.innerHTML = "";
-
-  if (shows.length === 0) {
-    containerEpisode.innerHTML = "<p>No shows available.</p>";
-    return;
-  }
-
-  shows.forEach((eachShow) => {
-    const clone = templateShow.content.cloneNode(true);
-
-    const img = clone.querySelector("img");
-    if (eachShow.image && eachShow.image.medium) {
-      img.src = eachShow.image.medium;
-      img.alt = eachShow.name;
-    } else {
-      img.src = "https://via.placeholder.com/250x140?text=No+Image";
-      img.alt = "No image available";
-    }
-
-    clone.querySelector(".title").textContent = eachShow.name;
-
-    const rating = eachShow.rating && eachShow.rating.average ? eachShow.rating.average : "N/A";
-    clone.querySelector(".rating").textContent = `rating: ⭐️ ${rating}`;
-
-    clone.querySelector(".card-genres").textContent = `Genres: ${eachShow.genres.join(", ")}`;
-
-    const status = eachShow.status || "Unknown";
-    clone.querySelector(".status").textContent = `Status: ${status}`;
-
-    const runtime = eachShow.runtime ? `${eachShow.runtime} min` : "N/A";
-    clone.querySelector(".runtime").textContent = `Run-Time: ${runtime}`;
-
-    clone.querySelector(".summary").textContent =
-      eachShow.summary
-        ? eachShow.summary.replace(/<[^>]+>/g, "")
-        : "No summary available.";
-
-    const selectThisShow = document.createElement("button");
-    selectThisShow.className = "selectThisShow";
-    selectThisShow.textContent = "▶️ Watch Show";
-    selectThisShow.addEventListener("click", function () {
-      document.getElementById("dDBAllShows").value = eachShow.id;
-      fetchEpisodesByShowId(eachShow.id);
-      switchToEpisodesView();
-    });
-    clone.querySelector(".showCard").appendChild(selectThisShow);
-
-    containerEpisode.append(clone);
-  });
-}
-
-//  ----------------------- Updated Main Functions ------------------------
-
-/**
- * Updated function to use pagination
- */
-function makePageForEpisodes(listOfApi) {
-  currentPage = 1; // Reset to first page
-  searchCounter(listOfApi, episodeCounter, "episodes");
-  displayPage(listOfApi, "episodes");
-}
-
-/**
- * Updated function to use pagination
- */
-function makePageForShows(listOfShows) {
-  currentPage = 1; // Reset to first page
-  searchCounter(listOfShows, allShows.length, "shows");
-  displayPage(listOfShows, "shows");
-}
-
-//  ----------------------- fetch Functions ------------------------
+// ===================== FETCH HELPERS =====================
 async function fetchWithCache(url) {
-  if (fetchCache.has(url)) {
+  if (stateData.fetchCache.has(url)) {
     console.log("Using cache for:", url);
-    return fetchCache.get(url);
+    return stateData.fetchCache.get(url);
   }
-
   console.log("Fetching from network:", url);
-  try {
-    const res = await fetch(url);
-    console.log("Response status:", res.status);
-    if (!res.ok) throw new Error(` Failed to fetch: ${url}`);
-    const data = await res.json();
-    console.log("Fetched data length:", data.length);
-    fetchCache.set(url, data);
-    return data;
-  } catch (error) {
-    console.error("Fetch error:", error);
-    throw error;
-  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch: ${url}`);
+  const data = await res.json();
+  stateData.fetchCache.set(url, data);
+  return data;
 }
 
 async function fetchAllShows(maxPages = 10) {
-  let all = [];
-
+  const all = [];
   async function getPage(page = 0) {
     const url = `https://api.tvmaze.com/shows?page=${page}`;
     try {
@@ -310,7 +50,6 @@ async function fetchAllShows(maxPages = 10) {
       console.error("Failed fetching show page", page, err);
     }
   }
-
   await getPage(0);
   return all.sort((a, b) =>
     a.name.toLowerCase().localeCompare(b.name.toLowerCase())
@@ -318,10 +57,10 @@ async function fetchAllShows(maxPages = 10) {
 }
 
 function fetchEpisodesByShowId(showId) {
-  const waitLoadMessage = document.createElement("p");
-  waitLoadMessage.id = "status-message";
-  waitLoadMessage.textContent = "Loading episodes...";
-  document.body.prepend(waitLoadMessage);
+  const wait = document.createElement("p");
+  wait.id = "status-message";
+  wait.textContent = "Loading episodes...";
+  document.body.prepend(wait);
 
   fetch(`https://api.tvmaze.com/shows/${showId}/episodes`)
     .then((res) => {
@@ -329,56 +68,75 @@ function fetchEpisodesByShowId(showId) {
       return res.json();
     })
     .then((episodes) => {
-      allEpisodes = episodes;
-      episodeCounter = episodes.length;
+      stateData.currentShowId = showId;
+      stateData.allEpisodes = episodes;
+      stateData.episodeCounter = episodes.length;
 
-      const msg = document.getElementById("status-message");
-      if (msg) msg.remove();
+      document.getElementById("status-message")?.remove();
 
-      dropBoxFill(episodes);
-      makePageForEpisodes(episodes);
+      dropBoxFill(stateData.allEpisodes);
+      switchToEpisodesView();
+      makePageForEpisodes(stateData.allEpisodes);
     })
     .catch((err) => {
       console.error("Error:", err);
       const msg = document.getElementById("status-message");
-      if (msg) {
-        msg.textContent = "⚠️ Failed to load episodes. Please try again later.";
-      }
+      if (msg) msg.textContent = "⚠️ Failed to load episodes. Please try again later.";
     });
 }
 
-//  ----------------------- main setup  ------------------------
+// ===================== SETUP =====================
 async function setup() {
-  allShows = await fetchAllShows();
-  dropBoxAllShows(allShows);
-  switchToShowsView(allShows);
-  console.log(allShows);
+  stateData.allShows = await fetchAllShows();
+  dropBoxAllShows(stateData.allShows);
+  switchToShowsView();
 
-  // Event Listeners
-  document
-    .getElementById("showSearchInput")
+  // Event listeners
+  document.getElementById("showSearchInput")
     .addEventListener("input", handleShowSearchEvent);
-  document
-    .getElementById("episodeSearchInput")
+
+  document.getElementById("episodeSearchInput")
     .addEventListener("input", handleEpisodeSearchEvent);
-  document
-    .getElementById("dropDownBoxFill")
+
+  document.getElementById("dropDownBoxFill")
     .addEventListener("change", handleEpisodeDropDownChange);
-  document
-    .getElementById("dDBAllShows")
+
+  document.getElementById("dDBAllShows")
     .addEventListener("change", handleShowDropDownChange);
-  document
-    .getElementById("backToShows")
-    .addEventListener("click", function (e) {
+
+  document.getElementById("backToShows")
+    .addEventListener("click", (e) => {
       e.preventDefault();
       switchToShowsView();
     });
+
+  document.getElementById("prevBtn")
+    .addEventListener("click", () => {
+      if (statePagination.currentPage > 1) {
+        statePagination.currentPage--;
+        displayPage(statePagination.currentDisplayList, statePagination.currentType);
+      }
+    });
+
+  document.getElementById("nextBtn")
+    .addEventListener("click", () => {
+      if (statePagination.currentPage < statePagination.totalPages) {
+        statePagination.currentPage++;
+        displayPage(statePagination.currentDisplayList, statePagination.currentType);
+      }
+    });
+
+  document.getElementById("itemsPerPageSelect")
+    .addEventListener("change", (e) => {
+      statePagination.itemsPerPage = parseInt(e.target.value, 10);
+      statePagination.currentPage = 1;
+      displayPage(statePagination.currentDisplayList, statePagination.currentType);
+    });
 }
 
-//  ----------------------- Event listener logic  ------------------------
-function handleShowDropDownChange(event) {
-  const selectedId = event.target.value;
-
+// ===================== EVENT HANDLERS =====================
+function handleShowDropDownChange(e) {
+  const selectedId = e.target.value;
   if (selectedId === "allShows") {
     switchToShowsView();
   } else {
@@ -386,143 +144,261 @@ function handleShowDropDownChange(event) {
   }
 }
 
-function handleEpisodeDropDownChange(event) {
-  const selectedId = event.target.value;
-
+function handleEpisodeDropDownChange(e) {
+  const selectedId = e.target.value;
   if (selectedId === "all") {
-    makePageForEpisodes(allEpisodes);
+    makePageForEpisodes(stateData.allEpisodes);
   } else {
-    const selectedEpisode = allEpisodes.filter((ep) => ep.id == selectedId);
+    const selectedEpisode = stateData.allEpisodes.filter((ep) => ep.id == selectedId);
     makePageForEpisodes(selectedEpisode);
   }
 }
 
-function handleShowSearchEvent(event) {
-  const searchValue = event.target.value.toLowerCase().trim();
+function handleShowSearchEvent(e) {
+  stateSearch.value = e.target.value.toLowerCase().trim();
+  if (stateSearch.view !== "shows") return;
 
-  if (currentView === "shows") {
-    if (searchValue === "") {
-      makePageForShows(allShows);
-    } else {
-      const filtered = allShows.filter((show) => {
-        const name = show.name.toLowerCase();
-        const summary = show.summary ? show.summary.toLowerCase() : "";
-        const genres = show.genres ? show.genres.join(" ").toLowerCase() : "";
-        return (
-          name.includes(searchValue) ||
-          summary.includes(searchValue) ||
-          genres.includes(searchValue)
-        );
-      });
-      makePageForShows(filtered);
-    }
+  if (stateSearch.value === "") {
+    makePageForShows(stateData.allShows);
+  } else {
+    const filtered = stateData.allShows.filter((show) => {
+      const name = show.name.toLowerCase();
+      const summary = show.summary ? show.summary.toLowerCase() : "";
+      const genres = show.genres ? show.genres.join(" ").toLowerCase() : "";
+      return (
+        name.includes(stateSearch.value) ||
+        summary.includes(stateSearch.value) ||
+        genres.includes(stateSearch.value)
+      );
+    });
+    makePageForShows(filtered);
   }
 }
 
-function handleEpisodeSearchEvent(event) {
-  const searchValue = event.target.value.toLowerCase().trim();
+function handleEpisodeSearchEvent(e) {
+  stateSearch.value = e.target.value.toLowerCase().trim();
+  if (stateSearch.view !== "episodes") return;
 
-  if (currentView === "episodes") {
-    if (searchValue === "") {
-      document.getElementById("dropDownBoxFill").value = "all";
-      makePageForEpisodes(allEpisodes);
-    } else {
-      const filtered = allEpisodes.filter((episode) => {
-        const name = episode.name.toLowerCase();
-        const summary = episode.summary ? episode.summary.toLowerCase() : "";
-        return name.includes(searchValue) || summary.includes(searchValue);
-      });
-      makePageForEpisodes(filtered);
-    }
+  if (stateSearch.value === "") {
+    document.getElementById("dropDownBoxFill").value = "all";
+    makePageForEpisodes(stateData.allEpisodes);
+  } else {
+    const filtered = stateData.allEpisodes.filter((ep) => {
+      const name = ep.name.toLowerCase();
+      const summary = ep.summary ? ep.summary.toLowerCase() : "";
+      return name.includes(stateSearch.value) || summary.includes(stateSearch.value);
+    });
+    makePageForEpisodes(filtered);
   }
 }
 
-// ----------------------- View Management ------------------------
+// ===================== VIEW MANAGEMENT =====================
 function switchToShowsView() {
-  currentView = "shows";
+  stateSearch.view = "shows";
+  statePagination.currentType = "shows";
+
   document.getElementById("episode-controls").style.display = "none";
   document.getElementById("onShow").style.display = "block";
   document.getElementById("showSearchInput").style.display = "block";
   document.querySelector('label[for="showSearchInput"]').style.display = "block";
   document.getElementById("backToShows").style.display = "none";
-  makePageForShows(allShows);
+
+  makePageForShows(stateData.allShows);
 }
 
 function switchToEpisodesView() {
-  currentView = "episodes";
+  stateSearch.view = "episodes";
+  statePagination.currentType = "episodes";
+
   document.getElementById("episode-controls").style.display = "flex";
   document.getElementById("onShow").style.display = "none";
+  document.getElementById("backToShows").style.display = "block";
   document.getElementById("backToShows").style.display = "block";
   document.getElementById("searchCounter").style.display = "block";
 }
 
-//  ----------------------- Helper Function------------------------
+// ===================== HELPERS =====================
 function padNumber(num) {
   return num.toString().padStart(2, "0");
 }
-
 function formatEpisodeCode(season, number) {
   return `S${padNumber(season)}E${padNumber(number)}`;
 }
-
-function formatShowCode(number) {
-  return `${padNumber(number)}`;
-}
-
 function searchCounter(list, total, type = "shows") {
   if (type === "shows") {
-    const counter = document.getElementById("showSearchCounter");
-    if (counter) {
-      counter.textContent = `Displaying ${list.length}/${total} show(s)`;
-    }
-  } else if (type === "episodes") {
-    const counter = document.getElementById("episodeSearchCounter");
-    if (counter) {
-      counter.textContent = `Displaying ${list.length}/${total} episode(s)`;
-    }
+    const el = document.getElementById("showSearchCounter");
+    if (el) el.textContent = `Displaying ${list.length}/${total} show(s)`;
+  } else {
+    const el = document.getElementById("episodeSearchCounter");
+    if (el) el.textContent = `Displaying ${list.length}/${total} episode(s)`;
   }
 }
 
-function searchEpisodes(allEpisodes, searchValue) {
-  const filtered = searchValue
-    ? allEpisodes.filter((episode) => {
-        const name = episode.name.toLowerCase();
-        const summary = episode.summary ? episode.summary.toLowerCase() : "";
-        const search = searchValue.toLowerCase();
-        return name.includes(search) || summary.includes(search);
-      })
-    : allEpisodes;
-  makePageForEpisodes(filtered);
-}
-
-function dropBoxFill(allEpisodes) {
-  const dropDBox = document.getElementById("dropDownBoxFill");
-  dropDBox.innerHTML = "";
-
-  dropDBox.add(new Option("Show All Episodes", "all"));
-
-  allEpisodes.forEach((episode) => {
-    dropDBox.add(
-      new Option(
-        `${formatEpisodeCode(episode.season, episode.number)} - ${
-          episode.name
-        }`,
-        episode.id
-      )
-    );
+function dropBoxFill(episodes) {
+  const box = document.getElementById("dropDownBoxFill");
+  box.innerHTML = "";
+  box.add(new Option("Show All Episodes", "all"));
+  episodes.forEach((ep) => {
+    box.add(new Option(`${formatEpisodeCode(ep.season, ep.number)} - ${ep.name}`, ep.id));
   });
 }
 
-function dropBoxAllShows(allShows) {
-  const dropDBoxShows = document.getElementById("dDBAllShows");
-  dropDBoxShows.innerHTML = "";
-
-  dropDBoxShows.add(new Option("Show All Shows", "allShows"));
-
-  allShows.forEach((show) => {
-    dropDBoxShows.add(new Option(show.name, show.id));
+function dropBoxAllShows(shows) {
+  const box = document.getElementById("dDBAllShows");
+  box.innerHTML = "";
+  box.add(new Option("Show All Shows", "allShows"));
+  shows.forEach((show) => {
+    box.add(new Option(show.name, show.id));
   });
 }
 
-// Initialize the application when the page loads
+// ===================== RENDERERS =====================
+function renderShowsPage(shows) {
+  const container = document.getElementById("cardContainer");
+  const tpl = document.getElementById("show-template");
+  container.className = "container";
+  container.innerHTML = "";
+
+  if (shows.length === 0) {
+    container.innerHTML = "<p>No shows available.</p>";
+    return;
+  }
+
+  shows.forEach((s) => {
+    const clone = tpl.content.cloneNode(true);
+
+    const img = clone.querySelector("img");
+    if (s.image?.medium) {
+      img.src = s.image.medium; img.alt = s.name;
+    } else {
+      img.src = "https://via.placeholder.com/250x140?text=No+Image";
+      img.alt = "No image available";
+    }
+
+    clone.querySelector(".title").textContent = s.name;
+    const rating = s.rating?.average ?? "N/A";
+    clone.querySelector(".rating").textContent = `rating: ⭐️ ${rating}`;
+    clone.querySelector(".card-genres").textContent = `Genres: ${s.genres.join(", ")}`;
+    clone.querySelector(".status").textContent = `Status: ${s.status || "Unknown"}`;
+    clone.querySelector(".runtime").textContent = `Run-Time: ${s.runtime ? `${s.runtime} min` : "N/A"}`;
+    clone.querySelector(".summary").textContent = s.summary ? s.summary.replace(/<[^>]+>/g, "") : "No summary available.";
+
+    const btn = document.createElement("button");
+    btn.className = "selectThisShow";
+    btn.textContent = "▶️ Watch Show";
+    btn.addEventListener("click", () => {
+      document.getElementById("dDBAllShows").value = s.id;
+      fetchEpisodesByShowId(s.id);
+    });
+    clone.querySelector(".showCard").appendChild(btn);
+
+    container.append(clone);
+  });
+}
+
+function renderEpisodesPage(episodes) {
+  const container = document.getElementById("cardContainer");
+  const tpl = document.getElementById("episode-template");
+  container.className = "container episodes";
+  container.innerHTML = "";
+
+  if (episodes.length === 0) {
+    container.innerHTML = "<p>No episodes match your search.</p>";
+    return;
+  }
+
+  episodes.forEach((ep) => {
+    const clone = tpl.content.cloneNode(true);
+
+    const img = clone.querySelector(".epi-img");
+    if (ep.image?.medium) {
+      img.src = ep.image.medium; img.alt = ep.name;
+    } else {
+      img.src = "https://via.placeholder.com/250x140?text=No+Image";
+      img.alt = "No image available";
+    }
+
+    clone.querySelector(".title").textContent = ep.name;
+    clone.querySelector(".code").textContent =
+      (ep.season != null && ep.number != null) ? formatEpisodeCode(ep.season, ep.number) : "Show";
+    clone.querySelector(".summary").textContent = ep.summary ? ep.summary.replace(/<[^>]+>/g, "") : "No summary available.";
+
+    container.append(clone);
+  });
+}
+
+// ===================== PAGE MAKERS (with pagination) =====================
+function makePageForShows(list) {
+  statePagination.currentPage = 1;
+  statePagination.currentType = "shows";
+  searchCounter(list, stateData.allShows.length, "shows");
+  displayPage(list, "shows");
+}
+
+function makePageForEpisodes(list) {
+  statePagination.currentPage = 1;
+  statePagination.currentType = "episodes";
+  searchCounter(list, stateData.episodeCounter, "episodes");
+  displayPage(list, "episodes");
+}
+
+// ===================== PAGINATION =====================
+function createPagination(items, type) {
+  statePagination.currentDisplayList = items;
+  statePagination.totalPages = Math.ceil(items.length / statePagination.itemsPerPage);
+
+  const container = document.getElementById("pagination-container");
+  if (!container) return;
+  const pageNumbers = container.querySelector(".page-numbers");
+  const pageInfo = container.querySelector(".page-info");
+  if (!pageNumbers || !pageInfo) return;
+
+  if (statePagination.totalPages <= 1) {
+    container.style.display = "none";
+    pageNumbers.innerHTML = "";
+    pageInfo.textContent = "Page 1 of 1";
+    return;
+  }
+
+  container.style.display = "flex";
+  pageNumbers.innerHTML = "";
+
+  const startPage = Math.max(1, statePagination.currentPage - 2);
+  const endPage = Math.min(statePagination.totalPages, startPage + 4);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.className = `pagination-btn page-number ${i === statePagination.currentPage ? "active" : ""}`;
+    btn.addEventListener("click", () => {
+      statePagination.currentPage = i;
+      displayPage(statePagination.currentDisplayList, type);
+    });
+    pageNumbers.appendChild(btn);
+  }
+
+  pageInfo.textContent = `Page ${statePagination.currentPage} of ${statePagination.totalPages}`;
+}
+
+function displayPage(items, type) {
+  const start = (statePagination.currentPage - 1) * statePagination.itemsPerPage;
+  const end = start + statePagination.itemsPerPage;
+  const pageItems = items.slice(start, end);
+
+  if (type === "episodes") {
+    renderEpisodesPage(pageItems);
+  } else {
+    renderShowsPage(pageItems);
+  }
+
+  statePagination.currentType = type;
+  createPagination(items, type);
+
+  document.getElementById("cardContainer").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+// ===================== BOOT =====================
 window.onload = setup;
