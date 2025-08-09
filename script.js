@@ -16,264 +16,6 @@ let itemsPerPage = 12; // 12 episodes (4 rows of 3) or 12 shows
 let totalPages = 1;
 let currentDisplayList = []; // Currently filtered/searched items
 
-//  ----------------------- Pagination Functions ------------------------
-
-/**
- * Creates pagination controls and handles page navigation
- * @param {Array} items - Array of items to paginate
- * @param {string} type - 'shows' or 'episodes'
- */
-function createPagination(items, type) {
-  currentDisplayList = items;
-  totalPages = Math.ceil(items.length / itemsPerPage);
-  
-  // Create pagination container
-  let paginationContainer = document.getElementById('pagination-container');
-  if (!paginationContainer) {
-    paginationContainer = document.createElement('div');
-    paginationContainer.id = 'pagination-container';
-    paginationContainer.className = 'pagination-container';
-    
-    // Insert after the card container
-    const cardContainer = document.getElementById('cardContainer');
-    cardContainer.parentNode.insertBefore(paginationContainer, cardContainer.nextSibling);
-  }
-  
-  // Clear existing pagination
-  paginationContainer.innerHTML = '';
-  
-  if (totalPages <= 1) {
-    paginationContainer.style.display = 'none';
-    return;
-  }
-  
-  paginationContainer.style.display = 'flex';
-  
-  // Previous button
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = '← Previous';
-  prevBtn.className = 'pagination-btn';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage--;
-      displayPage(currentDisplayList, type);
-    }
-  });
-  paginationContainer.appendChild(prevBtn);
-  
-  // Page info
-  const pageInfo = document.createElement('span');
-  pageInfo.className = 'page-info';
-  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-  paginationContainer.appendChild(pageInfo);
-  
-  // Page numbers (show up to 5 page numbers)
-  const startPage = Math.max(1, currentPage - 2);
-  const endPage = Math.min(totalPages, startPage + 4);
-  
-  const pageNumbers = document.createElement('div');
-  pageNumbers.className = 'page-numbers';
-  
-  for (let i = startPage; i <= endPage; i++) {
-    const pageBtn = document.createElement('button');
-    pageBtn.textContent = i;
-    pageBtn.className = `pagination-btn page-number ${i === currentPage ? 'active' : ''}`;
-    pageBtn.addEventListener('click', () => {
-      currentPage = i;
-      displayPage(currentDisplayList, type);
-    });
-    pageNumbers.appendChild(pageBtn);
-  }
-  paginationContainer.appendChild(pageNumbers);
-  
-  // Next button
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next →';
-  nextBtn.className = 'pagination-btn';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      displayPage(currentDisplayList, type);
-    }
-  });
-  paginationContainer.appendChild(nextBtn);
-  
-  // Items per page selector
-  const itemsPerPageContainer = document.createElement('div');
-  itemsPerPageContainer.className = 'items-per-page';
-  
-  const label = document.createElement('label');
-  label.textContent = 'Items per page: ';
-  
-  const select = document.createElement('select');
-  select.className = 'items-per-page-select';
-  [6, 12, 24, 48].forEach(num => {
-    const option = document.createElement('option');
-    option.value = num;
-    option.textContent = num;
-    option.selected = num === itemsPerPage;
-    select.appendChild(option);
-  });
-  
-  select.addEventListener('change', (e) => {
-    itemsPerPage = parseInt(e.target.value);
-    currentPage = 1; // Reset to first page
-    displayPage(currentDisplayList, type);
-  });
-  
-  itemsPerPageContainer.appendChild(label);
-  itemsPerPageContainer.appendChild(select);
-  paginationContainer.appendChild(itemsPerPageContainer);
-}
-
-/**
- * Displays a specific page of items
- * @param {Array} items - Array of items to display
- * @param {string} type - 'shows' or 'episodes'
- */
-function displayPage(items, type) {
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const pageItems = items.slice(startIndex, endIndex);
-  
-  if (type === 'episodes') {
-    renderEpisodesPage(pageItems);
-  } else {
-    renderShowsPage(pageItems);
-  }
-  
-  createPagination(items, type);
-  
-  // Scroll to top of results
-  document.getElementById('cardContainer').scrollIntoView({ 
-    behavior: 'smooth', 
-    block: 'start' 
-  });
-}
-
-/**
- * Renders episode cards for current page only
- */
-function renderEpisodesPage(episodes) {
-  const containerEpisode = document.getElementById("cardContainer");
-  const templateEpisode = document.getElementById("episode-template");
-
-  containerEpisode.className = "container episodes";
-  containerEpisode.innerHTML = "";
-
-  if (episodes.length === 0) {
-    containerEpisode.innerHTML = "<p>No episodes match your search.</p>";
-    return;
-  }
-
-  episodes.forEach((eachRecord) => {
-    const clone = templateEpisode.content.cloneNode(true);
-
-    const img = clone.querySelector(".epi-img");
-    if (eachRecord.image && eachRecord.image.medium) {
-      img.src = eachRecord.image.medium;
-      img.alt = eachRecord.name;
-    } else {
-      img.src = "https://via.placeholder.com/250x140?text=No+Image";
-      img.alt = "No image available";
-    }
-
-    clone.querySelector(".title").textContent = eachRecord.name;
-    clone.querySelector(".code").textContent =
-      eachRecord.season !== undefined && eachRecord.number !== undefined
-        ? formatEpisodeCode(eachRecord.season, eachRecord.number)
-        : "Show";
-
-    clone.querySelector(".summary").textContent =
-      eachRecord.summary
-        ? eachRecord.summary.replace(/<[^>]+>/g, "")
-        : "No summary available.";
-
-    containerEpisode.append(clone);
-  });
-}
-
-/**
- * Renders show cards for current page only
- */
-function renderShowsPage(shows) {
-  const containerEpisode = document.getElementById("cardContainer");
-  const templateShow = document.getElementById("show-template");
-
-  containerEpisode.className = "container";
-  containerEpisode.innerHTML = "";
-
-  if (shows.length === 0) {
-    containerEpisode.innerHTML = "<p>No shows available.</p>";
-    return;
-  }
-
-  shows.forEach((eachShow) => {
-    const clone = templateShow.content.cloneNode(true);
-
-    const img = clone.querySelector("img");
-    if (eachShow.image && eachShow.image.medium) {
-      img.src = eachShow.image.medium;
-      img.alt = eachShow.name;
-    } else {
-      img.src = "https://via.placeholder.com/250x140?text=No+Image";
-      img.alt = "No image available";
-    }
-
-    clone.querySelector(".title").textContent = eachShow.name;
-
-    const rating = eachShow.rating && eachShow.rating.average ? eachShow.rating.average : "N/A";
-    clone.querySelector(".rating").textContent = `rating: ⭐️ ${rating}`;
-
-    clone.querySelector(".card-genres").textContent = `Genres: ${eachShow.genres.join(", ")}`;
-
-    const status = eachShow.status || "Unknown";
-    clone.querySelector(".status").textContent = `Status: ${status}`;
-
-    const runtime = eachShow.runtime ? `${eachShow.runtime} min` : "N/A";
-    clone.querySelector(".runtime").textContent = `Run-Time: ${runtime}`;
-
-    clone.querySelector(".summary").textContent =
-      eachShow.summary
-        ? eachShow.summary.replace(/<[^>]+>/g, "")
-        : "No summary available.";
-
-    const selectThisShow = document.createElement("button");
-    selectThisShow.className = "selectThisShow";
-    selectThisShow.textContent = "▶️ Watch Show";
-    selectThisShow.addEventListener("click", function () {
-      document.getElementById("dDBAllShows").value = eachShow.id;
-      fetchEpisodesByShowId(eachShow.id);
-      switchToEpisodesView();
-    });
-    clone.querySelector(".showCard").appendChild(selectThisShow);
-
-    containerEpisode.append(clone);
-  });
-}
-
-//  ----------------------- Updated Main Functions ------------------------
-
-/**
- * Updated function to use pagination
- */
-function makePageForEpisodes(listOfApi) {
-  currentPage = 1; // Reset to first page
-  searchCounter(listOfApi, episodeCounter, "episodes");
-  displayPage(listOfApi, "episodes");
-}
-
-/**
- * Updated function to use pagination
- */
-function makePageForShows(listOfShows) {
-  currentPage = 1; // Reset to first page
-  searchCounter(listOfShows, allShows.length, "shows");
-  displayPage(listOfShows, "shows");
-}
-
 //  ----------------------- fetch Functions ------------------------
 async function fetchWithCache(url) {
   if (fetchCache.has(url)) {
@@ -373,6 +115,25 @@ async function setup() {
       e.preventDefault();
       switchToShowsView();
     });
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      displayPage(currentDisplayList, currentType);
+    }
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      displayPage(currentDisplayList, currentType);
+    }
+  });
+  document
+    .getElementById("itemsPerPageSelect")
+    .addEventListener("change", (e) => {
+      itemsPerPage = parseInt(e.target.value);
+      currentPage = 1; // Reset to first page
+      displayPage(currentDisplayList, type);
+    });
 }
 
 //  ----------------------- Event listener logic  ------------------------
@@ -443,7 +204,8 @@ function switchToShowsView() {
   document.getElementById("episode-controls").style.display = "none";
   document.getElementById("onShow").style.display = "block";
   document.getElementById("showSearchInput").style.display = "block";
-  document.querySelector('label[for="showSearchInput"]').style.display = "block";
+  document.querySelector('label[for="showSearchInput"]').style.display =
+    "block";
   document.getElementById("backToShows").style.display = "none";
   makePageForShows(allShows);
 }
@@ -523,6 +285,205 @@ function dropBoxAllShows(allShows) {
     dropDBoxShows.add(new Option(show.name, show.id));
   });
 }
+// ---------------------------- Renders ----------------------------
+/**
+ * Renders show cards for current page only
+ */
+function renderShowsPage(shows) {
+  const containerEpisode = document.getElementById("cardContainer");
+  const templateShow = document.getElementById("show-template");
+
+  containerEpisode.className = "container";
+  containerEpisode.innerHTML = "";
+
+  if (shows.length === 0) {
+    containerEpisode.innerHTML = "<p>No shows available.</p>";
+    return;
+  }
+
+  shows.forEach((eachShow) => {
+    const clone = templateShow.content.cloneNode(true);
+
+    const img = clone.querySelector("img");
+    if (eachShow.image && eachShow.image.medium) {
+      img.src = eachShow.image.medium;
+      img.alt = eachShow.name;
+    } else {
+      img.src = "https://via.placeholder.com/250x140?text=No+Image";
+      img.alt = "No image available";
+    }
+
+    clone.querySelector(".title").textContent = eachShow.name;
+
+    const rating =
+      eachShow.rating && eachShow.rating.average
+        ? eachShow.rating.average
+        : "N/A";
+    clone.querySelector(".rating").textContent = `rating: ⭐️ ${rating}`;
+
+    clone.querySelector(
+      ".card-genres"
+    ).textContent = `Genres: ${eachShow.genres.join(", ")}`;
+
+    const status = eachShow.status || "Unknown";
+    clone.querySelector(".status").textContent = `Status: ${status}`;
+
+    const runtime = eachShow.runtime ? `${eachShow.runtime} min` : "N/A";
+    clone.querySelector(".runtime").textContent = `Run-Time: ${runtime}`;
+
+    clone.querySelector(".summary").textContent = eachShow.summary
+      ? eachShow.summary.replace(/<[^>]+>/g, "")
+      : "No summary available.";
+
+    const selectThisShow = document.createElement("button");
+    selectThisShow.className = "selectThisShow";
+    selectThisShow.textContent = "▶️ Watch Show";
+    selectThisShow.addEventListener("click", function () {
+      document.getElementById("dDBAllShows").value = eachShow.id;
+      fetchEpisodesByShowId(eachShow.id);
+      switchToEpisodesView();
+    });
+    clone.querySelector(".showCard").appendChild(selectThisShow);
+
+    containerEpisode.append(clone);
+  });
+}
+
+/**
+ * Renders episode cards for current page only
+ */
+function renderEpisodesPage(episodes) {
+  const containerEpisode = document.getElementById("cardContainer");
+  const templateEpisode = document.getElementById("episode-template");
+
+  containerEpisode.className = "container episodes";
+  containerEpisode.innerHTML = "";
+
+  if (episodes.length === 0) {
+    containerEpisode.innerHTML = "<p>No episodes match your search.</p>";
+    return;
+  }
+
+  episodes.forEach((eachRecord) => {
+    const clone = templateEpisode.content.cloneNode(true);
+
+    const img = clone.querySelector(".epi-img");
+    if (eachRecord.image && eachRecord.image.medium) {
+      img.src = eachRecord.image.medium;
+      img.alt = eachRecord.name;
+    } else {
+      img.src = "https://via.placeholder.com/250x140?text=No+Image";
+      img.alt = "No image available";
+    }
+
+    clone.querySelector(".title").textContent = eachRecord.name;
+    clone.querySelector(".code").textContent =
+      eachRecord.season !== undefined && eachRecord.number !== undefined
+        ? formatEpisodeCode(eachRecord.season, eachRecord.number)
+        : "Show";
+
+    clone.querySelector(".summary").textContent = eachRecord.summary
+      ? eachRecord.summary.replace(/<[^>]+>/g, "")
+      : "No summary available.";
+
+    containerEpisode.append(clone);
+  });
+}
+
+//  ----------------------- Updated Main Functions ------------------------
+
+/**
+ * Updated function to use pagination
+ */
+function makePageForEpisodes(listOfApi) {
+  currentPage = 1; // Reset to first page
+  searchCounter(listOfApi, episodeCounter, "episodes");
+  displayPage(listOfApi, "episodes");
+}
+
+/**
+ * Updated function to use pagination
+ */
+function makePageForShows(listOfShows) {
+  currentPage = 1; // Reset to first page
+  searchCounter(listOfShows, allShows.length, "shows");
+  displayPage(listOfShows, "shows");
+}
+
+//  ----------------------- Pagination Functions ------------------------
+
+/**
+ * Creates pagination controls and handles page navigation
+ * @param {Array} items - Array of items to paginate
+ * @param {string} type - 'shows' or 'episodes'
+ */
+function createPagination(items, type) {
+  currentDisplayList = items;
+  totalPages = Math.ceil(items.length / itemsPerPage);
+
+  const paginationContainer = document.getElementById("pagination-container");
+  if (!paginationContainer) return;
+
+  const pageNumbers = paginationContainer.querySelector(".page-numbers");
+  const pageInfo = paginationContainer.querySelector(".page-info");
+  if (!pageNumbers || !pageInfo) return;
+
+  // Hide if not needed
+  if (totalPages <= 1) {
+    paginationContainer.style.display = "none";
+    pageNumbers.innerHTML = "";
+    pageInfo.textContent = "Page 1 of 1";
+    return;
+  }
+
+  paginationContainer.style.display = "flex";
+  pageNumbers.innerHTML = ""; // clear old buttons
+
+  // Build 5-page window
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + 4);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.className = `pagination-btn page-number ${i === currentPage ? "active" : ""}`;
+    pageBtn.addEventListener("click", () => {
+      currentPage = i;
+      displayPage(currentDisplayList, type);
+    });
+    pageNumbers.appendChild(pageBtn);
+  }
+
+  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+}
+
+
+/**
+ * Displays a specific page of items
+ * @param {Array} items - Array of items to display
+ * @param {string} type - 'shows' or 'episodes'
+ */
+function displayPage(items, type) {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = items.slice(startIndex, endIndex);
+
+  if (type === "episodes") {
+    renderEpisodesPage(pageItems);
+  } else {
+    renderShowsPage(pageItems);
+  }
+
+  createPagination(items, type);
+
+  // Scroll to top of results
+  document.getElementById("cardContainer").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+
 
 // Initialize the application when the page loads
 window.onload = setup;
