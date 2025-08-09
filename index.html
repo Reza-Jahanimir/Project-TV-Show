@@ -52,6 +52,24 @@
 
     <div id="cardContainer" class="container"></div>
 
+    <!-- ===== Pagination bar ===== -->
+    <div id="pagination-container" class="pagination-container">
+      <button id="prevBtn" class="pagination-btn">← Previous</button>
+      <span class="page-info">Page 1 of 1</span>
+      <div class="page-numbers"></div>
+      <button id="nextBtn" class="pagination-btn">Next →</button>
+
+      <div class="items-per-page">
+        <label for="itemsPerPageSelect">Items per page: </label>
+        <select id="itemsPerPageSelect" class="items-per-page-select">
+          <option value="6">6</option>
+          <option value="12" selected>12</option>
+          <option value="24">24</option>
+          <option value="48">48</option>
+        </select>
+      </div>
+    </div>
+
     <!-- ===== EPISODE TEMPLATE ===== -->
     <template id="episode-template">
       <section class="episode-card">
