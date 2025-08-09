@@ -1,5 +1,5 @@
 // ===================== STATE =====================
-// 1) API/Data state
+// API/Data state
 const stateData = {
   allShows: [],
   allEpisodes: [],
@@ -8,16 +8,16 @@ const stateData = {
   episodeCounter: 0,
 };
 
-// 2) Search/UI mode state
+// Search/UI mode state
 const stateSearch = {
   view: "shows",          // 'shows' | 'episodes'
-  value: "",              // current search query (lowercased, trimmed)
+  value: "",              
 };
 
-// 3) Pagination state
+// Pagination state
 const statePagination = {
   currentPage: 1,
-  itemsPerPage: 12,       // 12 episodes (4x3) or 12 shows
+  itemsPerPage: 12,       
   totalPages: 1,
   currentDisplayList: [],
   currentType: "shows",   // 'shows' | 'episodes'
@@ -213,8 +213,7 @@ function switchToEpisodesView() {
   document.getElementById("episode-controls").style.display = "flex";
   document.getElementById("onShow").style.display = "none";
   document.getElementById("backToShows").style.display = "block";
-  document.getElementById("backToShows").style.display = "block";
-  document.getElementById("searchCounter").style.display = "block";
+  document.getElementById("episodeSearchCounter").style.display = "block";
 }
 
 // ===================== HELPERS =====================
@@ -289,6 +288,7 @@ function renderShowsPage(shows) {
     btn.addEventListener("click", () => {
       document.getElementById("dDBAllShows").value = s.id;
       fetchEpisodesByShowId(s.id);
+      switchToEpisodesView()
     });
     clone.querySelector(".showCard").appendChild(btn);
 
