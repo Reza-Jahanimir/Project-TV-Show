@@ -161,10 +161,13 @@ function displayPage(items, type) {
   });
 }
 
+//  ----------------------- Render Functions ------------------------
+
 /**
  * Renders episode cards for current page only
  */
 function renderEpisodesPage(episodes) {
+  console.log(episodes)
   const containerEpisode = document.getElementById("cardContainer");
   const templateEpisode = document.getElementById("episode-template");
 
@@ -198,6 +201,10 @@ function renderEpisodesPage(episodes) {
       eachRecord.summary
         ? eachRecord.summary.replace(/<[^>]+>/g, "")
         : "No summary available.";
+
+    clone.querySelector(".card-select").addEventListener("click", () => {
+      window.open(eachRecord.url, '_blank')
+    })
 
     containerEpisode.append(clone);
   });
