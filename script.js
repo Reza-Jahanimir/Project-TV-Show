@@ -447,12 +447,7 @@ function handleEpisodeSearchEvent(event) {
       document.getElementById("dropDownBoxFill").value = "all";
       makePageForEpisodes(stateData.allEpisodes);
     } else {
-      const filtered = stateData.allEpisodes.filter((episode) => {
-        const name = episode.name.toLowerCase();
-        const summary = episode.summary ? episode.summary.toLowerCase() : "";
-        return name.includes(searchValue) || summary.includes(searchValue);
-      });
-      makePageForEpisodes(filtered);
+      searchEpisodes(stateData.allEpisodes, searchVal)
     }
   }
 }
