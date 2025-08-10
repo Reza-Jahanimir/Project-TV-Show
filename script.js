@@ -401,6 +401,7 @@ function handleShowDropDownChange(event) {
     switchToShowsView();
   } else {
     fetchEpisodesByShowId(selectedId);
+    switchToEpisodesView()
   }
 }
 
