@@ -447,7 +447,7 @@ function handleEpisodeSearchEvent(event) {
       document.getElementById("dropDownBoxFill").value = "all";
       makePageForEpisodes(stateData.allEpisodes);
     } else {
-      searchEpisodes(stateData.allEpisodes, searchVal)
+      searchEpisodes(stateData.allEpisodes, searchValue)
     }
   }
 }
